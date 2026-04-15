@@ -1,18 +1,12 @@
 import pytest
 from app import create_app, db
-import os
 
 
 @pytest.fixture
 def app():
-    test_db_uri = os.getenv(
-        "TEST_DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5432/testdb"
-    )
-
     app = create_app({
         "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": test_db_uri
+        "SQLALCHEMY_DATABASE_URI": "postgresql://postgres:postgres@db:5432/testdb"
     })
 
     with app.app_context():
