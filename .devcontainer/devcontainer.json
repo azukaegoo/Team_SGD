@@ -5,6 +5,8 @@
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "forwardPorts": [5000],
   "initializeCommand": "[ -f .env ] || cp .env_sample .env",
-  "postCreateCommand": "pip install -r requirements.txt",
-  "postStartCommand": "docker compose up -d"
+  "postStartCommand": "docker compose up -d db",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  }
 }
