@@ -1,12 +1,13 @@
 {
   "name": "One Button App",
-  "dockerComposeFile": "../docker-compose.yml",
-  "service": "web",
+  "image": "python:3.12-bookworm",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "forwardPorts": [5000],
+  "forwardPorts": [5000, 5432],
   "initializeCommand": "[ -f .env ] || cp .env_sample .env",
-  "postStartCommand": "docker compose up -d db",
+  "postStartCommand": "docker compose up -d",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    }
   }
 }
