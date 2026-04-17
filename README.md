@@ -84,10 +84,7 @@ docker compose up --build
 ```bash
 http://localhost:5000
 ```
-### 3. Running Test
-```bash
-docker compose exec web python -m pytest
-```
+
 
 ## Development Setup and AI Collaboration
 
@@ -103,10 +100,6 @@ Development is carried out in:
 - Local Docker environments
 - GitHub Codespaces (container-based)
 
-Tests are executed using:
-```bash
-docker compose exec web python -m pytest
-````
 
 
 
