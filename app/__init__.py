@@ -17,7 +17,11 @@ def create_app(test_config=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    from . import models
     from .routes import main
     app.register_blueprint(main)
+
+    with app.app_context():
+        db.create_all()
 
     return app
