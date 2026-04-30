@@ -1,8 +1,16 @@
+version: '3.8'
+
 services:
   web:
     build: .
     ports:
       - "5000:5000"
+<<<<<<< HEAD
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+=======
     env_file:
       - .env
     depends_on:
@@ -19,3 +27,4 @@ services:
 
 volumes:
   postgres_data:
+>>>>>>> main
