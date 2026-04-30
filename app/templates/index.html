@@ -43,7 +43,19 @@
     <h1>One Button App</h1>
     <p>Click the button below.</p>
 
-    <button onclick="showMessage()">Click Me</button>
+     {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/submit">
+        <button type="submit" onclick="showMessage()">Click Me</button>
+    </form>
 
     <p id="message"></p>
 
