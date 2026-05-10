@@ -21,7 +21,4 @@ def create_app(test_config=None):
     from .routes import main
     app.register_blueprint(main)
 
-    with app.app_context():
-        db.create_all()
-
     return app
