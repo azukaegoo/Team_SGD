@@ -6,7 +6,7 @@
 
   "initializeCommand": "[ -f .env ] || cp .env_sample .env",
 
-  "postStartCommand": "docker compose up -d && npm install && nohup npx @tailwindcss/cli -i ./app/static/src/input.css -o ./app/static/css/output.css --watch > /tmp/tailwind.log 2>&1 &",
+  "postStartCommand": "docker compose up --build -d && npm install && docker compose exec web flask db upgrade",
 
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
