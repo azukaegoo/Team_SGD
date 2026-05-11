@@ -3,8 +3,11 @@
   "image": "python:3.12-bookworm",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "forwardPorts": [5000, 5432],
+
   "initializeCommand": "[ -f .env ] || cp .env_sample .env",
-  "postStartCommand": "docker compose up -d",
+
+  "postStartCommand": "docker compose up -d && npm install && nohup npx @tailwindcss/cli -i ./app/static/src/input.css -o ./app/static/css/output.css --watch > /tmp/tailwind.log 2>&1 &",
+
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": false
