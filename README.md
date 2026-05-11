@@ -150,12 +150,6 @@ team_sgd-db-1
 
 ## Database Migration
 
-Run database migrations:
-
-```bash
-docker compose exec web flask db upgrade
-```
-
 Create a new migration:
 
 ```bash
@@ -227,12 +221,6 @@ docker compose logs web
 ---
 
 # Recommended Workflow
-
-## Backend Development
-
-```bash
-docker compose exec web flask db upgrade
-```
 
 ## Frontend Development
 
