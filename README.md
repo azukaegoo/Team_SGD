@@ -84,26 +84,177 @@ docker compose up --build
 ```bash
 http://localhost:5000
 ```
+### 5. Open another terminal and start tailwind in watch mode
+Start Tailwind watch mode:
+
+```bash
+npx @tailwindcss/cli -i ./app/static/src/input.css -o ./app/static/css/output.css --watch
+```
+
+This automatically rebuilds CSS whenever changes are made.
+
+---
+
+## Opening the Project in Codespaces
+
+1. Open the repository on GitHub
+2. Click:
+
+```text
+Code → Codespaces → Create codespace on main
+```
+
+3. Wait for the dev container to finish configuring
+
+The dev container automatically:
+
+- installs Node.js
+- installs npm packages
+- starts Docker services
+- forwards ports 5000 and 5432
+
+---
+
+## Project Stack
+
+- Flask
+- PostgreSQL
+- Docker Compose
+- Tailwind CSS
+- GitHub Codespaces
+
+---
+
+## Starting the Application
+
+After Codespaces finishes loading, start the containers:
+
+```bash
+docker compose up --build -d
+```
+
+Check running containers:
+
+```bash
+docker ps
+```
+
+Expected containers:
+
+```text
+team_sgd-web-1
+team_sgd-db-1
+```
+
+---
+
+## Database Migration
+
+Run database migrations:
+
+```bash
+docker compose exec web flask db upgrade
+```
+
+Create a new migration:
+
+```bash
+docker compose exec web flask db migrate -m "message"
+```
+
+---
+
+## Running Tailwind CSS
+
+Start Tailwind watch mode:
+
+```bash
+npx @tailwindcss/cli -i ./app/static/src/input.css -o ./app/static/css/output.css --watch
+```
+
+This automatically rebuilds CSS whenever changes are made.
+
+---
+
+## Accessing the Application
+
+Flask app:
+
+```text
+http://localhost:5000
+```
+
+PostgreSQL:
+
+```text
+localhost:5432
+```
+
+---
+
+## Useful Docker Commands
+
+Stop containers:
+
+```bash
+docker compose down
+```
+
+Restart containers:
+
+```bash
+docker compose restart
+```
+
+Rebuild containers:
+
+```bash
+docker compose up --build
+```
+
+View logs:
+
+```bash
+docker compose logs
+```
+
+View web logs only:
+
+```bash
+docker compose logs web
+```
+
+---
+
+# Recommended Workflow
+
+## Backend Development
+
+```bash
+docker compose exec web flask db upgrade
+```
+
+## Frontend Development
+
+```bash
+npx @tailwindcss/cli -i ./app/static/src/input.css -o ./app/static/css/output.css --watch
+```
+
+---
+
+# Important Notes
+
+- Do NOT commit `.env`
+- Do NOT commit `node_modules`
+- Do NOT commit `__pycache__`
+- Commit migration files after successful migrations
+
+---
 
 
-## Development Setup and AI Collaboration
-
-### System Setup
-
-Our application is built using **Flask** with **SQLAlchemy** and runs in a containerized environment using **Docker Compose**.
-
-The system consists of:
-- **web container** → Flask application
-- **db container** → PostgreSQL database
-
-Development is carried out in:
-- Local Docker environments
-- GitHub Codespaces (container-based)
 
 
-
-
-### Team Roles
+## Team Roles
 
 #### Human Members
 - Design system architecture
