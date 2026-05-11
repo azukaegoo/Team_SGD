@@ -125,35 +125,18 @@ The dev container automatically:
 
 ---
 
-## Starting the Application
-
-After Codespaces finishes loading, start the containers:
-
-```bash
-docker compose up --build -d
-```
-
 Check running containers:
 
 ```bash
 docker ps
 ```
 
+---
 Expected containers:
 
 ```text
 team_sgd-web-1
 team_sgd-db-1
-```
-
----
-
-## Database Migration
-
-Create a new migration:
-
-```bash
-docker compose exec web flask db migrate -m "message"
 ```
 
 ---
