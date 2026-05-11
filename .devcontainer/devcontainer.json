@@ -6,11 +6,16 @@
 
   "initializeCommand": "[ -f .env ] || cp .env_sample .env",
 
-  "postStartCommand": "docker compose up --build -d && npm install && docker compose exec web flask db upgrade",
+  "postCreateCommand": "npm install",
+
+  "postStartCommand": "docker compose up --build -d",
 
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": false
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
     }
   }
 }
