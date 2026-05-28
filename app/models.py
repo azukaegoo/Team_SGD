@@ -31,3 +31,20 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f"<User {self.id}: {self.email}>"
+
+class CheckIn(db.Model):
+    __tablename__ = 'check_ins'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    mood_score = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.Date, default=lambda: datetime.now(UTC).date(), nullable=False)
+    habits = db.Column(db.String(200), nullable=True) 
+    note = db.Column(db.Text, nullable=True)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'date', name='_user_daily_checkin_uc'),
+    )
+
+    def __repr__(self):
+        return f"<CheckIn User {self.user_id} on {self.date}: Mood {self.mood_score}>"
