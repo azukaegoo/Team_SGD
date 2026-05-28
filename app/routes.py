@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from functools import wraps
 from . import db
-from .models import OneAppButton
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,7 +26,7 @@ def home():
 @main.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("home.html")
+    return render_template("ho.html")
 
 # Redirect old routes to the new auth blueprint to prevent breaking existing links
 @main.route("/signup")
