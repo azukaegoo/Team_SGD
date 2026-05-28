@@ -3,7 +3,7 @@ from .models import db, User
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/register', methods=['GET', 'POST'])
+@auth_bp.route('/signup', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -12,7 +12,7 @@ def register():
         # Check if email already exists
         if User.query.filter_by(email=email).first():
             flash('Email already exists.')
-            return redirect(url_for('auth.register'))
+            return redirect(url_for('auth.old_register_fallback'))
             
         # Create and save new user
         new_user = User(email=email)
@@ -24,6 +24,11 @@ def register():
         
     return render_template('signup.html')
 
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def old_register_fallback():
+    return register()
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -33,8 +38,8 @@ def login():
         
         if user and user.check_password(password):
             session['user_id'] = user.id
-            # Redirect to dashboard (to be implemented later)
-            return redirect(url_for('dashboard'))
+            # Redirect to dashboard
+            return redirect(url_for('main.dashboard'))
         else:
             flash('Invalid email or password.')
             

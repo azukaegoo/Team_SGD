@@ -26,16 +26,7 @@ def home():
 @main.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("ho.html")
-
-# Redirect old routes to the new auth blueprint to prevent breaking existing links
-@main.route("/signup")
-def signup():
-    return redirect(url_for('auth.register'))
-
-@main.route("/login")
-def old_login():
-    return redirect(url_for('auth.login'))
+   return render_template("home.html")
 
 @main.route("/goals")
 @login_required
