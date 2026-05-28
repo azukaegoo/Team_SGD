@@ -1,9 +1,11 @@
+import sys
 from flask import Blueprint, request, render_template, redirect, url_for, session, flash
+from flask_login import login_user, logout_user  
 from .models import db, User
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/register', methods=['GET', 'POST'])
+@auth_bp.route('/signup', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -12,7 +14,7 @@ def register():
         # Check if email already exists
         if User.query.filter_by(email=email).first():
             flash('Email already exists.')
-            return redirect(url_for('auth.register'))
+            return redirect(url_for('auth.old_register_fallback'))
             
         # Create and save new user
         new_user = User(email=email)
@@ -22,7 +24,13 @@ def register():
         
         return redirect(url_for('auth.login'))
         
-    return render_template('register.html')
+    return render_template('signup.html')
+
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def old_register_fallback():
+    return register()
+
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -32,15 +40,19 @@ def login():
         user = User.query.filter_by(email=email).first()
         
         if user and user.check_password(password):
-            session['user_id'] = user.id
-            # Redirect to dashboard (to be implemented later)
-            return redirect(url_for('dashboard'))
+            login_user(user)
+            
+            print(f"DEBUG: User logged in - Email: {user.email}, Plan: {user.plan}", flush=True)
+            print(f"DEBUG: Is user premium? -> {user.is_premium()}", flush=True)
+            
+            return redirect(url_for('main.dashboard'))
         else:
             flash('Invalid email or password.')
             
     return render_template('login.html')
 
+
 @auth_bp.route('/logout')
 def logout():
-    session.pop('user_id', None)
+    logout_user()
     return redirect(url_for('auth.login'))
