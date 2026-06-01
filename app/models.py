@@ -11,7 +11,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     plan = db.Column(db.String(20), default='free') # 'free' or 'premium'
     
-    selected_goals = db.Column(db.String(200), nullable=True) 
+    selected_goals = db.Column(db.String(200), nullable=True)
+    selected_habits = db.Column(db.String(255), nullable=True) 
     
     created_at = db.Column(db.DateTime(timezone=True),
                            default=lambda: datetime.now(UTC),
