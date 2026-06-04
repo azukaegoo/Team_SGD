@@ -112,3 +112,14 @@ def submit():
         logger.exception("Database error while saving button click: %s", e)
         flash("Could not save button click.")
     return redirect(url_for("main.home"))
+
+
+@main.route("/insights/history")
+def insights_history():
+    # backend: fetch user's past insight records
+    # Each record needs: id, date_range, days
+    return render_template("insight_history.html", records=[], selected_period="1m")
+
+@main.route("/insights")
+def insights():
+    return render_template("insights.html")
