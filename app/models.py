@@ -6,7 +6,6 @@ from flask_login import UserMixin
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
-    ai_consent = db.Column(db.Boolean, default=True)
     theme_preference = db.Column(db.String(50), default='light')
     
     id = db.Column(db.Integer, primary_key=True)

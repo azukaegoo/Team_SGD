@@ -242,24 +242,21 @@ def profile():
     user_id = current_user.id
     today = datetime.now(UTC).date()
     
-    # 1. Total Check-ins
     total_checkins = CheckIn.query.filter_by(user_id=user_id).count()
     
-    # 2. Average Mood
     avg_mood_result = db.session.query(func.avg(CheckIn.mood_score)).filter_by(user_id=user_id).scalar()
     average_mood = round(avg_mood_result, 1) if avg_mood_result else 0.0
     
-    # 3. Current Streak
     checkins = CheckIn.query.filter_by(user_id=user_id).order_by(CheckIn.date.desc()).all()
-    current_streak = 0
+    streak = 0
     if checkins:
         first_date = checkins[0].date
         if first_date == today or first_date == today - timedelta(days=1):
-            current_streak = 1
+            streak = 1
             expected_date = first_date - timedelta(days=1)
             for i in range(1, len(checkins)):
                 if checkins[i].date == expected_date:
-                    current_streak += 1
+                    streak += 1
                     expected_date -= timedelta(days=1)
                 else:
                     break
@@ -269,7 +266,7 @@ def profile():
         user=current_user,
         total_checkins=total_checkins,
         average_mood=average_mood,
-        current_streak=current_streak
+        streak=streak  
     )
 
 @main.route("/settings", methods=['GET'])
@@ -281,13 +278,11 @@ def settings():
 @main.route("/settings/update", methods=['POST'])
 @login_required
 def update_settings():
-    """Task: Update account details and AI personalisation."""
+    """Task: Update account details."""
     new_email = request.form.get('email')
-    ai_consent = request.form.get('ai_consent') == 'on' 
     
     if new_email:
         current_user.email = new_email
-    current_user.ai_consent = ai_consent
     
     db.session.commit()
     flash("Settings updated successfully!")
