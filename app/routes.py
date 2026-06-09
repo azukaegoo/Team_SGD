@@ -7,6 +7,10 @@ from datetime import datetime, UTC, timedelta
 from sqlalchemy import func
 from itertools import combinations
 from collections import Counter
+import csv
+from io import StringIO
+from flask import make_response
+
 from .models import User, CheckIn, WeeklyInsight
 
 logger = logging.getLogger(__name__)
@@ -39,36 +43,39 @@ def dashboard():
     """Render the dashboard with aggregated user statistics."""
     user_id = current_user.id
     today = datetime.now(UTC).date()
-    
-    # 1. Calculate Today's Check-in Status
-    today_checkin = CheckIn.query.filter_by(user_id=user_id, date=today).first()
+
+    # 1. Calculate Today's Check-in Status 
+    today_checkin = CheckIn.query.filter(CheckIn.user_id == user_id, func.date(CheckIn.date) == today).first()
     has_checked_in_today = today_checkin is not None
 
-    print(f"DEBUG: Today's check-in is: {today_checkin}")
-    
-    checkin_status = (today_checkin is not None)
-    return render_template("dashboard.html", user=current_user, checkin_status=checkin_status)
-    
     # 2. Calculate Total Check-ins
     total_checkins = CheckIn.query.filter_by(user_id=user_id).count()
-    
+
     # 3. Calculate Average Mood Score
     avg_mood_result = db.session.query(func.avg(CheckIn.mood_score)).filter_by(user_id=user_id).scalar()
     average_mood = round(avg_mood_result, 1) if avg_mood_result else 0.0
-    
+
     # 4. Calculate Current Streak (Consecutive days)
     checkins = CheckIn.query.filter_by(user_id=user_id).order_by(CheckIn.date.desc()).all()
-    
+
     current_streak = 0
     if checkins:
         first_date = checkins[0].date
-        if first_date == today or first_date == today - timedelta(days=1):
+        if hasattr(first_date, 'date'):
+            first_date_pure = first_date.date()
+        else:
+            first_date_pure = first_date
+            
+        if first_date_pure == today or first_date_pure == today - timedelta(days=1):
             current_streak = 1
-            expected_date = first_date - timedelta(days=1)
+            expected_date = first_date_pure - timedelta(days=1)
             for i in range(1, len(checkins)):
-                if checkins[i].date == expected_date:
+                c_date = checkins[i].date.date() if hasattr(checkins[i].date, 'date') else checkins[i].date
+                if c_date == expected_date:
                     current_streak += 1
                     expected_date -= timedelta(days=1)
+                elif c_date > expected_date:
+                    continue
                 else:
                     break
 
@@ -93,27 +100,21 @@ def dashboard():
     ranked_habits.sort(key=lambda x: x["average_mood"], reverse=True)
 
     # 6. Find Common Habit Combinations on High-Mood Days (Mood >= 4)
-    # Goal: Identify which habits frequently appear together when the user is happy
     habit_pairs = []
     for checkin in all_checkins:
         if checkin.mood_score >= 4 and checkin.habits:
-            # Clean and sort so ('A', 'B') is treated the same as ('B', 'A')
             habits_list = sorted([h.strip() for h in checkin.habits.split(',') if h.strip()])
             if len(habits_list) >= 2:
-                # Generate all possible pairs of habits from this check-in
                 pairs = list(combinations(habits_list, 2))
                 habit_pairs.extend(pairs)
 
-    # Count the frequencies of each pair and get the top 3
     pair_counts = Counter(habit_pairs)
     top_combinations = [{"pair": " + ".join(pair), "count": count} for pair, count in pair_counts.most_common(3)]
 
-    print(
-        f"DEBUG: Dashboard stats for {current_user.email} -> Streak: {current_streak}, Top Combo: {top_combinations[0]['pair'] if top_combinations else 'None'}",
-        flush=True)
-
     return render_template(
         "dashboard.html", 
+        user=current_user,
+        checkin_status=has_checked_in_today,
         has_checked_in_today=has_checked_in_today,
         total_checkins=total_checkins,
         average_mood=average_mood,
@@ -121,7 +122,6 @@ def dashboard():
         ranked_habits=ranked_habits,
         top_combinations=top_combinations
     )
-
 
 # ═══════════════════════════════════════════
 # ONBOARDING
@@ -132,26 +132,26 @@ def goals():
     """Handle user onboarding Step 1: Save selected goals."""
     if request.method == 'POST':
         selected_goals = request.form.get('goals')
-
         if selected_goals:
             current_user.selected_goals = selected_goals
             db.session.commit()
-            print(f"DEBUG: Goals saved for {current_user.email} -> {selected_goals}", flush=True)
-        
         return redirect(url_for('main.habits')) 
-        
     return render_template("goals.html")
-
 
 @main.route('/check-in', methods=['GET', 'POST'])
 @login_required
 def check_in():
     today = datetime.now(UTC).date()
-    existing_checkin = CheckIn.query.filter_by(user_id=current_user.id, date=today).first()
-    
-    if request.method == 'GET':
-        return render_template("check_in.html", existing_checkin=existing_checkin)
+    existing_checkin = CheckIn.query.filter(CheckIn.user_id == current_user.id, func.date(CheckIn.date) == today).first()
 
+    if request.method == 'GET':
+        saved_habits_str = getattr(current_user, 'selected_habits', '')
+        user_habits = []
+        if saved_habits_str:
+            habit_list = [h.strip() for h in saved_habits_str.split(',') if h.strip()]
+            for h in habit_list:
+                user_habits.append({'id': h, 'name': h.capitalize()})
+        return render_template("check_in.html", existing_checkin=existing_checkin, habits=user_habits)
 
     mood_score = request.form.get('mood_score') 
     habits = request.form.get('habits')         
@@ -165,7 +165,7 @@ def check_in():
         mood_score = int(mood_score)
     except ValueError:
         flash('Invalid mood score format!')
-        return redirect(url_for('main.checkin'))
+        return redirect(url_for('main.check_in'))
 
     if existing_checkin:
         flash('You have already submitted your check-in for today!')
@@ -183,10 +183,6 @@ def check_in():
     flash('Daily check-in saved successfully!')
     return redirect(url_for('main.dashboard'))
 
-
-
-
-
 # ═══════════════════════════════════════════
 # PREMIUM
 # ═══════════════════════════════════════════
@@ -203,11 +199,9 @@ def premium_insights():
 @main.route("/insights", methods=['GET'])
 @login_required
 def view_insights():
-    """Goal: Users can view previous insight summaries.
-       Rule: Locked for new users until they reach 7 check-ins."""
-       
+    """Goal: Users can view previous insight summaries."""
     total_checkins = CheckIn.query.filter_by(user_id=current_user.id).count()
-    
+
     if total_checkins < 7:
         remaining = 7 - total_checkins
         flash(f"Keep going! You need {remaining} more check-in{'s' if remaining > 1 else ''} to unlock your Insights.", "info")
@@ -215,7 +209,6 @@ def view_insights():
 
     past_insights = WeeklyInsight.query.filter_by(user_id=current_user.id).order_by(WeeklyInsight.end_date.desc()).all()
     return render_template("insights.html", insights=past_insights)
-
 
 @main.route("/insights/generate", methods=['POST'])
 @login_required
@@ -258,7 +251,7 @@ def generate_insight():
 
     db.session.add(new_insight)
     db.session.commit()
-    
+
     flash("Weekly insight generated successfully!")
     return redirect(url_for('main.view_insights'))
 
@@ -271,23 +264,31 @@ def profile():
     """Goal: Provide user profile information."""
     user_id = current_user.id
     today = datetime.now(UTC).date()
-    
+
     total_checkins = CheckIn.query.filter_by(user_id=user_id).count()
-    
+
     avg_mood_result = db.session.query(func.avg(CheckIn.mood_score)).filter_by(user_id=user_id).scalar()
     average_mood = round(avg_mood_result, 1) if avg_mood_result else 0.0
-    
+
     checkins = CheckIn.query.filter_by(user_id=user_id).order_by(CheckIn.date.desc()).all()
     streak = 0
     if checkins:
         first_date = checkins[0].date
-        if first_date == today or first_date == today - timedelta(days=1):
+        if hasattr(first_date, 'date'):
+            first_date_pure = first_date.date()
+        else:
+            first_date_pure = first_date
+            
+        if first_date_pure == today or first_date_pure == today - timedelta(days=1):
             streak = 1
-            expected_date = first_date - timedelta(days=1)
+            expected_date = first_date_pure - timedelta(days=1)
             for i in range(1, len(checkins)):
-                if checkins[i].date == expected_date:
+                c_date = checkins[i].date.date() if hasattr(checkins[i].date, 'date') else checkins[i].date
+                if c_date == expected_date:
                     streak += 1
                     expected_date -= timedelta(days=1)
+                elif c_date > expected_date:
+                    continue
                 else:
                     break
 
@@ -313,10 +314,8 @@ def settings():
 def update_settings():
     """Task: Update account details."""
     new_email = request.form.get('email')
-    
     if new_email:
         current_user.email = new_email
-    
     db.session.commit()
     flash("Settings updated successfully!")
     return redirect(url_for('main.settings'))
@@ -326,36 +325,57 @@ def update_settings():
 def cancel_premium():
     """Task: Unsubscribe from premium and delete premium data."""
     user = db.session.get(User, current_user.id)
-
     if user.plan == 'premium':
         user.plan = 'free'
-        
         WeeklyInsight.query.filter_by(user_id=user.id).delete()
-        
         db.session.commit()
         flash("Your Premium subscription has been cancelled and premium data has been removed.")
     else:
         flash("You are not currently on a Premium plan.")
-        
     return redirect(url_for('main.settings'))
-
 
 @main.route("/settings/delete-account", methods=['POST'])
 @login_required
 def delete_account():
     """Task: Account deletion."""
     user_id = current_user.id
-
     CheckIn.query.filter_by(user_id=user_id).delete()
     WeeklyInsight.query.filter_by(user_id=user_id).delete()
-
     user_to_delete = db.session.get(User, user_id)
     db.session.delete(user_to_delete)
     db.session.commit()
-
     logout_user()
     flash("Your account has been permanently deleted.")
     return redirect(url_for('main.home'))
+
+@main.route("/settings/upgrade-premium", methods=['POST'])
+@login_required
+def upgrade_premium_settings():
+    """Task: Upgrade user to premium plan from settings page."""
+    user = db.session.get(User, current_user.id)
+    if user.plan != 'premium':
+        user.plan = 'premium'
+        db.session.commit()
+        flash('Successfully upgraded to Premium!', 'success')
+    else:
+        flash('You are already a Premium member.', 'info')
+    
+    return redirect(url_for('main.settings'))
+
+@main.route("/settings/update-tone", methods=['POST'])
+@login_required
+def update_tone():
+    """Task: Update the user's preferred AI tone."""
+    new_tone = request.form.get('tone')
+    
+    if new_tone:
+        current_user.ai_tone = new_tone 
+        db.session.commit()
+        flash(f"Tone preference updated to {new_tone}!", 'success')
+    else:
+        flash("Please select a tone preference.", 'error')
+    
+    return redirect(url_for('main.settings'))
 
 # ----------------------------------------------------
 # Onboarding Step 2: Habit Selection
@@ -365,18 +385,11 @@ def delete_account():
 def habits():
     """Handle user onboarding Step 2: Save selected habits."""
     if request.method == 'POST':
-        # Use the variable name 'habits' according to Notion specifications
         selected_habits = request.form.get('habits')
-        
         if selected_habits:
             current_user.selected_habits = selected_habits
             db.session.commit()
-            print(f"DEBUG: Habits saved for {current_user.email} -> {selected_habits}", flush=True)
-            
-        # Redirect to the final completion page once saved
         return redirect(url_for('main.complete'))
-        
-    # Render the habit selection template for GET requests
     return render_template("habits.html")
 
 # ----------------------------------------------------
@@ -386,21 +399,15 @@ def habits():
 @login_required
 def complete():
     """Handle user onboarding Step 3: Show completion screen."""
-    # Render the onboarding complete template (the dashboard link button is in the HTML)
     return render_template("onboarding_complete.html")
-
-import csv
-from io import StringIO
-from flask import make_response
 
 @main.route("/export-data", methods=['GET'])
 @login_required
 def export_data():
     """Task: Export user data to CSV, with check if data exists."""
     user_id = current_user.id
-    
     checkins = CheckIn.query.filter_by(user_id=user_id).order_by(CheckIn.date.desc()).all()
-    
+
     if not checkins:
         flash("There is no data to export yet.", "error")
         return redirect(url_for('main.settings'))
@@ -408,27 +415,24 @@ def export_data():
     si = StringIO()
     cw = csv.writer(si)
     cw.writerow(['Date', 'Mood Score', 'Habits', 'Notes'])
-    
+
     for c in checkins:
         cw.writerow([c.date, c.mood_score, c.habits, c.note])
 
     output = make_response(si.getvalue())
     output.headers["Content-Disposition"] = "attachment; filename=habitmind_data.csv"
     output.headers["Content-type"] = "text/csv"
-    
     return output
 
-@main.route("/upgrade", methods=['POST'])
+@main.route("/upgrade", methods=['GET', 'POST'])
 @login_required
 def upgrade_premium():
     """Task: Upgrade user to premium plan."""
     user = db.session.get(User, current_user.id)
-    
     if user.plan != 'premium':
         user.plan = 'premium'
         db.session.commit()
         flash('Successfully upgraded to Premium!', 'success')
     else:
         flash('You are already a Premium member.', 'info')
-        
     return redirect(url_for('main.settings'))

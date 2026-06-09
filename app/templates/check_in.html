@@ -103,15 +103,11 @@
         <p class="text-sm mb-5" style="color: #5b8a76;">Tap all the habits you completed.</p>
 
         <div class="flex flex-col gap-3">
-          {% for habit in habits %}
-          <button type="button" onclick="toggleHabit(this, '{{ habit.id }}')" class="habit-chip flex items-center gap-3 p-4 rounded-xl border-2 text-left" style="border-color:#e8efeb; background:#fafdfb;">
-            <span class="check-circle w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0" style="border-color:#cfdbd5;">
-              <svg class="check-icon hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </span>
-            <span class="font-semibold" style="color:#134e3a;">{{ habit.name }}</span>
-          </button>
+          {% for habit in habits %}  <button type="button" onclick="toggleHabit(this, '{{ habit.id }}')" ...>
+              <span class="font-semibold">{{ habit.name }}</span>
+            </button>
           {% else %}
-          <p class="text-sm text-center py-4" style="color:#8aa89b;">No habits found. Your chosen habits will appear here.</p>
+            <p>No habits found.</p>
           {% endfor %}
         </div>
       </div>
