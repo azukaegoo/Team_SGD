@@ -43,6 +43,11 @@ def dashboard():
     # 1. Calculate Today's Check-in Status
     today_checkin = CheckIn.query.filter_by(user_id=user_id, date=today).first()
     has_checked_in_today = today_checkin is not None
+
+    print(f"DEBUG: Today's check-in is: {today_checkin}")
+    
+    checkin_status = (today_checkin is not None)
+    return render_template("dashboard.html", user=current_user, checkin_status=checkin_status)
     
     # 2. Calculate Total Check-ins
     total_checkins = CheckIn.query.filter_by(user_id=user_id).count()
@@ -138,14 +143,14 @@ def goals():
     return render_template("goals.html")
 
 
-@main.route("/checkin", methods=['GET', 'POST'])
+@main.route('/check-in', methods=['GET', 'POST'])
 @login_required
-def checkin():
+def check_in():
     today = datetime.now(UTC).date()
     existing_checkin = CheckIn.query.filter_by(user_id=current_user.id, date=today).first()
     
     if request.method == 'GET':
-        return render_template("checkin.html", existing_checkin=existing_checkin)
+        return render_template("check_in.html", existing_checkin=existing_checkin)
 
 
     mood_score = request.form.get('mood_score') 
@@ -154,7 +159,7 @@ def checkin():
 
     if not mood_score:
         flash('Mood score is required!')
-        return redirect(url_for('main.checkin'))
+        return redirect(url_for('main.dashboard'))
 
     try:
         mood_score = int(mood_score)

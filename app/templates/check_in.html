@@ -51,7 +51,7 @@
     </div>
 
     <!-- FORM -->
-    <form action="/check-in" method="POST" class="max-w-2xl mx-auto">
+    <form id="checkinForm" action="/check-in" method="POST" class="max-w-2xl mx-auto">
 
       <input type="hidden" name="mood" id="moodInput" value="" />
       <input type="hidden" name="habits_done" id="habitsInput" value="" />
@@ -122,8 +122,8 @@
   <!-- STICKY SAVE BUTTON -->
   <div class="fixed bottom-0 left-0 right-0 z-30 p-6" style="background: linear-gradient(to top, #f7faf8 0%, #f7faf8 70%, transparent 100%);">
     <div class="max-w-2xl mx-auto">
-      <button type="button" id="saveBtn" onclick="saveCheckin()" disabled class="w-full inline-flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-base cursor-not-allowed" style="background:#e8efeb; color:#8aa89b;">
-        Save Check-in
+      <button type="submit" form="checkinForm" id="saveBtn" disabled class="w-full inline-flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-base" style="background:#e8efeb; color:#8aa89b; cursor:not-allowed;">
+       Save Check-in
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </button>
     </div>
