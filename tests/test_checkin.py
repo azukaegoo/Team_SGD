@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, UTC, timedelta
-from app.models import User, CheckIn, WeeklyInsight
+from app.models import User, CheckIn, CurrentInsight, InsightReport
 from app import db
 
 @pytest.mark.skip(reason="Waiting for Safrin's frontend templates")
