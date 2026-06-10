@@ -42,7 +42,7 @@ def old_register_fallback():
     return register()
 
 # ═══════════════════════════════════════════
-# LOG IN
+# LOG IN 
 # ═══════════════════════════════════════════
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -58,13 +58,14 @@ def login():
             login_user(user)
             
             print(f"DEBUG: User logged in - Email: {user.email}, Plan: {user.plan}", flush=True)
-            print(f"DEBUG: Is user premium? -> {user.is_premium()}", flush=True)
             
-            # If onboarding is not complete, redirect to goals
-            if not user.selected_goals:
-                return redirect(url_for('main.goals'))
-            
-            return redirect(url_for('main.dashboard'))
+            if not user.onboarding_completed:
+                if not user.selected_goals:
+                    return redirect(url_for("main.goals"))
+                
+                return redirect(url_for("main.habits"))
+
+            return redirect(url_for("main.dashboard"))
         else:
             flash('Invalid email or password. Please try again.', 'error')
             return redirect(url_for('auth.login'))
