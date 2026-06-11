@@ -464,3 +464,15 @@ def export_data():
     output.headers["Content-Disposition"] = "attachment; filename=habitmind_data.csv"
     output.headers["Content-type"] = "text/csv"
     return output
+
+@main.route("/edit_habit/<int:habit_id>", methods=["GET", "POST"])
+@login_required
+def edit_habit(habit_id):
+    """Handle editing a user's habit goal/frequency."""
+    return render_template("edit_habit.html", habit_id=habit_id)
+
+@main.route("/edit_goal/<int:goal_id>", methods=["GET", "POST"])
+@login_required
+def edit_goal(goal_id):
+    """Handle editing a specific user goal."""
+    return render_template("edit_goal.html", goal_id=goal_id)
