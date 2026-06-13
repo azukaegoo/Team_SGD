@@ -47,7 +47,7 @@ def test_goals_onboarding_redirects_to_habits(client, app, authenticated_user):
 
 
 def test_habits_onboarding_redirects_to_complete(client, app, authenticated_user):
-    """Verify that submitting habits redirects to the completion screen."""
+    """Verify that submitting habits redirects dashboard"""
     with client.session_transaction() as sess:
         sess['_user_id'] = str(authenticated_user.id)
         sess['_fresh'] = True
@@ -55,4 +55,4 @@ def test_habits_onboarding_redirects_to_complete(client, app, authenticated_user
     response = client.post('/habits', data={'habits': '1,2,3,4,5'}, follow_redirects=False)
 
     assert response.status_code == 302
-    assert "/complete" in response.headers['Location']
+    assert "/dashboard" in response.headers['Location']
